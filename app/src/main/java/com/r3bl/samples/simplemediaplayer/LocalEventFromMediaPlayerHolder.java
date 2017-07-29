@@ -53,4 +53,13 @@ public class LocalEventFromMediaPlayerHolder {
 
     }
 
+    public static class StateChanged {
+
+        public final MediaPlayerHolder.PlayerState currentState;
+
+        public StateChanged(MediaPlayerHolder.PlayerState currentState) {
+            this.currentState = currentState;
+        }
+    }
+
 }

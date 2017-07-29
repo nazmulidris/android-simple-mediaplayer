@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int MEDIA_RESOURCE_ID = R.raw.formula_1_daniel_simon;
 
     private MediaPlayerHolder mMediaPlayerHolder;
+    private boolean isUserSeeking;
 
     @BindView(R.id.text_debug)
     TextView mTextDebug;
@@ -68,9 +70,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         EventBus.getDefault().register(this);
-
-        mMediaPlayerHolder = new MediaPlayerHolder(this, MEDIA_RESOURCE_ID);
-
+        mMediaPlayerHolder = new MediaPlayerHolder(this);
         setupSeekbar();
     }
 
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mMediaPlayerHolder.create();
+        mMediaPlayerHolder.load(MEDIA_RESOURCE_ID);
     }
 
     // Handle user input for Seekbar changes.
@@ -104,21 +104,19 @@ public class MainActivity extends AppCompatActivity {
                 // Only fire seekTo() calls when user stops the touch event.
                 if (fromUser) {
                     userSelectedPosition = progress;
+                    isUserSeeking = true;
                 }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                EventBus.getDefault().post(
-                        new LocalEventFromMainActivity.StopUpdatingSeekbarWithMediaPosition());
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                isUserSeeking = false;
                 EventBus.getDefault().post(new LocalEventFromMainActivity.SeekTo(
                         userSelectedPosition));
-                EventBus.getDefault().post(
-                        new LocalEventFromMainActivity.StartUpdatingSeekbarWithPlaybackPosition());
             }
         });
     }
@@ -170,7 +168,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(LocalEventFromMediaPlayerHolder.PlaybackPosition event) {
-        mSeekbarAudio.setProgress(event.position, true);
+        if (!isUserSeeking) {
+            mSeekbarAudio.setProgress(event.position, true);
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(LocalEventFromMediaPlayerHolder.StateChanged event) {
+        Toast.makeText(this, String.format("State changed to:%s", event.currentState),
+                       Toast.LENGTH_SHORT).show();
     }
 
 }

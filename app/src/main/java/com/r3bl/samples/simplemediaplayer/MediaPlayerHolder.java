@@ -19,7 +19,6 @@ package com.r3bl.samples.simplemediaplayer;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
-import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -39,20 +38,18 @@ public class MediaPlayerHolder {
     public static final int SEEKBAR_REFRESH_INTERVAL_MS = 100;
 
     private int mResourceId;
-    private MediaPlayer mMediaPlayer = null;
+    private final MediaPlayer mMediaPlayer;
     private Context mContext;
     private ArrayList<String> mLogMessages = new ArrayList<>();
     private ScheduledExecutorService mExecutor;
     private Runnable mSeekbarProgressUpdateTask;
 
-    public MediaPlayerHolder(Context context, int resourceId) {
-        mContext = context;
-        mResourceId = resourceId;
+    enum PlayerState {
+        PLAYING, PAUSED, COMPLETED, RESET
     }
 
-    // MediaPlayer orchestration.
-
-    public void create() {
+    public MediaPlayerHolder(Context context) {
+        mContext = context;
         EventBus.getDefault().register(this);
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -61,49 +58,53 @@ public class MediaPlayerHolder {
                 stopUpdatingSeekbarWithPlaybackProgress(true);
                 logToUI("MediaPlayer playback completed");
                 EventBus.getDefault().post(new LocalEventFromMediaPlayerHolder.PlaybackCompleted());
+                EventBus.getDefault()
+                        .post(new LocalEventFromMediaPlayerHolder.StateChanged(
+                                PlayerState.COMPLETED));
             }
         });
-        load();
-        initSeekbar();
         logToUI("mMediaPlayer = new MediaPlayer()");
     }
+
+    // MediaPlayer orchestration.
 
     public void release() {
         logToUI("release() and mMediaPlayer = null");
         mMediaPlayer.release();
-        mMediaPlayer = null;
         EventBus.getDefault().unregister(this);
     }
 
     public void play() {
-        if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
+        if (!mMediaPlayer.isPlaying()) {
             logToUI(String.format("start() %s",
                                   mContext.getResources().getResourceEntryName(mResourceId)));
             mMediaPlayer.start();
             startUpdatingSeekbarWithPlaybackProgress();
+            EventBus.getDefault()
+                    .post(new LocalEventFromMediaPlayerHolder.StateChanged(PlayerState.PLAYING));
         }
     }
 
     public void pause() {
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
-        } else {
-            Toast.makeText(mContext,
-                           "Can't pause if not playing",
-                           Toast.LENGTH_SHORT)
-                    .show();
+            logToUI("pause()");
+            EventBus.getDefault()
+                    .post(new LocalEventFromMediaPlayerHolder.StateChanged(PlayerState.PAUSED));
         }
-        logToUI("pause()");
     }
 
     public void reset() {
         logToUI("reset()");
         mMediaPlayer.reset();
-        load();
+        load(mResourceId);
         stopUpdatingSeekbarWithPlaybackProgress(true);
+        EventBus.getDefault()
+                .post(new LocalEventFromMediaPlayerHolder.StateChanged(PlayerState.RESET));
     }
 
-    public void load() {
+    public void load(int resourceId) {
+        mResourceId = resourceId;
         AssetFileDescriptor assetFileDescriptor =
                 mContext.getResources().openRawResourceFd(mResourceId);
         try {
@@ -119,6 +120,7 @@ public class MediaPlayerHolder {
         } catch (Exception e) {
             logToUI(e.toString());
         }
+        initSeekbar();
     }
 
     public void seekTo(int duration) {
@@ -139,7 +141,6 @@ public class MediaPlayerHolder {
 
     private void startUpdatingSeekbarWithPlaybackProgress() {
         // Setup a recurring task to sync the mMediaPlayer position with the Seekbar.
-
         if (mExecutor == null) {
             mExecutor = Executors.newSingleThreadScheduledExecutor();
         }
@@ -156,7 +157,6 @@ public class MediaPlayerHolder {
                 }
             };
         }
-
         mExecutor.scheduleAtFixedRate(
                 mSeekbarProgressUpdateTask,
                 0,
@@ -168,7 +168,6 @@ public class MediaPlayerHolder {
     public void initSeekbar() {
         // Set the duration.
         final int duration = mMediaPlayer.getDuration();
-
         EventBus.getDefault().post(
                 new LocalEventFromMediaPlayerHolder.PlaybackDuration(duration));
         logToUI(String.format("setting seekbar max %d sec",
