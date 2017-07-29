@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MediaPlayerHolder {
 
-    public static final int SEEKBAR_REFRESH_INTERVAL_MS = 100;
+    public static final int SEEKBAR_REFRESH_INTERVAL_MS = 1000;
 
     private int mResourceId;
     private final MediaPlayer mMediaPlayer;
