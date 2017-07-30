@@ -2,7 +2,7 @@
 
 This article is an introduction on how to use Android MediaPlayer in your apps to playback audio.
 
-In order to playback audio you can use MediaPlayer or ExpPlayer on Android. For this article, we are going to use MediaPlayer. 
+In order to playback audio you can use MediaPlayer or ExoPlayer on Android. For this article, we are going to use MediaPlayer. 
 
 You can use one instance of MediaPlayer to play one piece of audio at any given time. However, you can re-use an instance of MediaPlayer to play different audio files.
 
@@ -14,7 +14,7 @@ There are more sophisticated use cases involving audio focus and MediaSession wh
 
 # Source code on Github
 
-You can get the source code for the example app use in this article on GitHub here - [github.com/r3bl-alliance/android-simple-mediaplayer/](https://github.com/r3bl-alliance/android-simple-mediaplayer). 
+You can get the source code for the example app use in this article [at github.com/r3bl-alliance/android-simple-mediaplayer/](https://github.com/r3bl-alliance/android-simple-mediaplayer). 
 
 # Using MediaPlayer
 
