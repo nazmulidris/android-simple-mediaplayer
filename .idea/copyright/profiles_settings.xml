@@ -1,7 +1,7 @@
 <component name="CopyrightManager">
-  <settings default="r3bl">
+  <settings default="nazmul">
     <module2copyright>
-      <element module="Project Files" copyright="r3bl" />
+      <element module="All" copyright="nazmul" />
     </module2copyright>
   </settings>
 </component>

@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 R3BL LLC. All rights reserved.
+ * Copyright 2018 Nazmul Idris. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
@@ -29,10 +30,6 @@ import android.widget.Toast;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 
 /**
  * Creates a UI to allow the user to play, pause, and reset playback of a single
@@ -49,17 +46,11 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayerHolder mMediaPlayerHolder;
     private boolean isUserSeeking;
 
-    @BindView(R.id.text_debug)
     TextView mTextDebug;
-    @BindView(R.id.button_play)
     Button mPlayButton;
-    @BindView(R.id.button_pause)
     Button mPauseButton;
-    @BindView(R.id.button_reset)
     Button mResetButton;
-    @BindView(R.id.seekbar_audio)
     SeekBar mSeekbarAudio;
-    @BindView(R.id.scroll_container)
     ScrollView mScrollContainer;
 
     // Activity lifecycle.
@@ -68,10 +59,40 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        bindViews();
         EventBus.getDefault().register(this);
         mMediaPlayerHolder = new MediaPlayerHolder(this);
         setupSeekbar();
+    }
+
+    private void bindViews() {
+        mTextDebug = findViewById(R.id.text_debug);
+        mPlayButton = findViewById(R.id.button_play);
+        mPauseButton = findViewById(R.id.button_pause);
+        mResetButton = findViewById(R.id.button_reset);
+        mSeekbarAudio = findViewById(R.id.seekbar_audio);
+        mScrollContainer = findViewById(R.id.scroll_container);
+
+        mPauseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pause();
+            }
+        });
+
+        mPlayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                play();
+            }
+        });
+
+        mResetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                reset();
+            }
+        });
     }
 
     @Override
@@ -123,17 +144,14 @@ public class MainActivity extends AppCompatActivity {
 
     // Handle user input for button presses.
 
-    @OnClick(R.id.button_pause)
     void pause() {
         EventBus.getDefault().post(new LocalEventFromMainActivity.PausePlayback());
     }
 
-    @OnClick(R.id.button_play)
     void play() {
         EventBus.getDefault().post(new LocalEventFromMainActivity.StartPlayback());
     }
 
-    @OnClick(R.id.button_reset)
     void reset() {
         EventBus.getDefault().post(new LocalEventFromMainActivity.ResetPlayback());
     }
